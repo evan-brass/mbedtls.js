@@ -5,7 +5,7 @@ src/mbedtls.wasm: c-src/* vendor/include/* vendor/library/*
 		-DMBEDTLS_CONFIG_FILE=\"config.h\" \
 		-fvisibility=default \
 		-mexec-model=reactor \
-		-Wl,--export-dynamic,--no-entry \
+		-Wl,--export-dynamic,--no-entry,--allow-undefined \
 		-o $@ \
 		$(filter %.c, $^)
 	wasm-tools print $@ | grep -E "import|export" > symbols.txt
