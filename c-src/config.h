@@ -1,168 +1,35 @@
-#define MBEDTLS_DEPRECATED_REMOVED
 #define MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
 
-// I need to prevent <stdio.h> from being included at all costs, because I think the definitions of stdin/out/err are causing function pointers to __stdio_write/_seek/_close
 #include <stdio.h>
-#define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
+#include <time.h>
 
-// We're going to need to overwrite a lot of stuff...
-#define MBEDTLS_PLATFORM_C
-
-// Support time and date, but we want to use javascript imports not wasi syscalls
-#define MBEDTLS_HAVE_TIME
-#define MBEDTLS_HAVE_TIME_DATE
-
-// We won't support tls1.3 so ms_time won't even be used, but this is how it should be
 #define MBEDTLS_PLATFORM_MS_TIME_ALT
 #define MBEDTLS_PLATFORM_MS_TIME_TYPE_MACRO double
-#define MBEDTLS_PLATFORM_MS_TIME_MACRO js_performance_now
-__attribute__((import_module("./time.js"))) double js_performance_now(void);
+__attribute__((import_module("./time.js"),import_name("performance_now"))) double mbedtls_ms_time(void);
 
-// #define MBEDTLS_PLATFORM_TIME_ALT
 #define MBEDTLS_PLATFORM_TIME_TYPE_MACRO double
-#define MBEDTLS_PLATFORM_TIME_MACRO js_date_now
-__attribute__((import_module("./time.js"))) double js_date_now(double*);
+#define MBEDTLS_PRINTF_MS_TIME d
+#define MBEDTLS_PLATFORM_TIME_MACRO mbedtls_time
+__attribute__((import_module("./time.js"),import_name("date_now"))) double mbedtls_time(double*);
 
-// The end goal is to remove gmtime altogether and to import the x509 is_past and is_future functions directly, I believe that those are the only places where gmtime is actually needed
+// TODO: I intend to remove gmtime_r entirely and then import javascript is_past and is_future functions
 #define MBEDTLS_PLATFORM_GMTIME_R_ALT
-#define MBEDTLS_PLATFORM_GMTIME_R_MACRO() (void);
+#define MBEDTLS_PLATFORM_GMTIME_R_MACRO mbedtls_platform_gmtime_r
+__attribute__((import_module("./time.js"),import_name("gmtime"))) struct tm *mbedtls_platform_gmtime_r(const double *tt, struct tm *tm_buf);
 
-// TODO: Swap this out with AES_ALT implemented using subtle crypto?
-#define MBEDTLS_AES_C
+#define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 
-#define MBEDTLS_ARIA_C
-#define MBEDTLS_ASN1_PARSE_C
-#define MBEDTLS_ASN1_WRITE_C
-#define MBEDTLS_BASE64_C
-#define MBEDTLS_BIGNUM_C
+// I think mbedtls_printf is called directly by mbedtls_ssl_config_defaults and ssl_check_no_sig_alg_duplication
+#define MBEDTLS_PLATFORM_PRINTF_MACRO(...)
 
-#define MBEDTLS_CAMELLIA_C
-#define MBEDTLS_CCM_C
-#define MBEDTLS_CHACHA20_C
-#define MBEDTLS_CHACHAPOLY_C
-
-#define MBEDTLS_CIPHER_C
-#define MBEDTLS_CIPHER_MODE_CBC
-#define MBEDTLS_CIPHER_MODE_CFB
-#define MBEDTLS_CIPHER_MODE_CTR
-#define MBEDTLS_CIPHER_MODE_OFB
-#define MBEDTLS_CIPHER_MODE_XTS
-#define MBEDTLS_CIPHER_PADDING_PKCS7
-#define MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS
-#define MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN
-#define MBEDTLS_CIPHER_PADDING_ZEROS
-
-#define MBEDTLS_CMAC_C
-
-#define MBEDTLS_CTR_DRBG_C
-// #define MBEDTLS_DEBUG_C
-#define MBEDTLS_DHM_C
-#define MBEDTLS_ECDH_C
-
-#define MBEDTLS_ECDSA_C
-#define MBEDTLS_ECDSA_DETERMINISTIC
-
-#define MBEDTLS_ECJPAKE_C
-
-#define MBEDTLS_ECP_C
-#define MBEDTLS_ECP_NIST_OPTIM
-#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP192K1_ENABLED
-#define MBEDTLS_ECP_DP_SECP224K1_ENABLED
-#define MBEDTLS_ECP_DP_SECP256K1_ENABLED
-#define MBEDTLS_ECP_DP_BP256R1_ENABLED
-#define MBEDTLS_ECP_DP_BP384R1_ENABLED
-#define MBEDTLS_ECP_DP_BP512R1_ENABLED
-
-// #define MBEDTLS_ERROR_C
-#define MBEDTLS_GCM_C
-#define MBEDTLS_HKDF_C
-#define MBEDTLS_HMAC_DRBG_C
-#define MBEDTLS_MD_C
-#define MBEDTLS_MD5_C
-
-// OID uses snprintf which wasi-libc uses vfprintf to implement and since there's a virtual file there it seems to include the wasi file syscalls close/seek/write.  This issue also affect debug and error
-// TODO: Rewrite oid to not use snprintf or rewrite snprintf to not use a virtual file
-#define MBEDTLS_OID_C
-
-#define MBEDTLS_PEM_C
-
-#define MBEDTLS_PK_C
-#define MBEDTLS_PK_PARSE_EC_EXTENDED
-#define MBEDTLS_PK_PARSE_EC_COMPRESSED
-
-// TODO: These require OID
-#define MBEDTLS_PKCS5_C
-#define MBEDTLS_PKCS7_C
-#define MBEDTLS_PKCS1_V15
-#define MBEDTLS_PKCS1_V21
-
-// WEIRD: PKCS12 doesn't require OID, but PKCS5 and 7 do.  Also, check_config.h doesn't enforce OID_C for PKCS5 which results in undefined symbols when linking
-#define MBEDTLS_PKCS12_C
-
-#define MBEDTLS_PK_PARSE_C
-#define MBEDTLS_PK_WRITE_C
-
-#define MBEDTLS_POLY1305_C
-#define MBEDTLS_RIPEMD160_C
-
-// TODO: RSA require MBEDTLS_PKCS1_V21
-#define MBEDTLS_RSA_C
-
-#define MBEDTLS_SHA1_C
-#define MBEDTLS_SHA3_C
-#define MBEDTLS_SHA256_C
-#define MBEDTLS_SHA512_C
-
-#define MBEDTLS_SSL_TLS_C
-// #define MBEDTLS_SSL_CACHE_C
-#define MBEDTLS_SSL_CLI_C
-// #define MBEDTLS_SSL_COOKIE_C
-// #define MBEDTLS_SSL_TICKET_C
-#define MBEDTLS_SSL_ALL_ALERT_MESSAGES
-#define MBEDTLS_SSL_DTLS_CONNECTION_ID
-#define MBEDTLS_SSL_DTLS_CONNECTION_ID_COMPAT 0
-#define MBEDTLS_SSL_CONTEXT_SERIALIZATION
-#define MBEDTLS_SSL_ENCRYPT_THEN_MAC
-#define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
-#define MBEDTLS_SSL_KEEP_PEER_CERTIFICATE
-#define MBEDTLS_SSL_RENEGOTIATION
-#define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
-#define MBEDTLS_SSL_PROTO_TLS1_2
-#define MBEDTLS_SSL_PROTO_DTLS
-#define MBEDTLS_SSL_ALPN
-#define MBEDTLS_SSL_DTLS_ANTI_REPLAY
-#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
-#define MBEDTLS_SSL_DTLS_SRTP
-#define MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
-#define MBEDTLS_SSL_VARIABLE_BUFFER_LENGTH
-
-#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_DHE_PSK_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_ECDH_ECDSA_ENABLED
-#define MBEDTLS_KEY_EXCHANGE_ECDH_RSA_ENABLED
-
-#define MBEDTLS_X509_REMOVE_INFO
-#define MBEDTLS_X509_CREATE_C
-#define MBEDTLS_X509_CRL_C
-#define MBEDTLS_X509_CRL_PARSE_C
-#define MBEDTLS_X509_USE_C
-#define MBEDTLS_X509_CRT_C
-#define MBEDTLS_X509_CRT_PARSE_C
-#define MBEDTLS_X509_CSR_C
-#define MBEDTLS_X509_WRITE_CRT_C
-#define MBEDTLS_X509_WRITE_CSR_C
-#define MBEDTLS_X509_WRITE_C
-#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
-
-#define MBEDTLS_GENPRIME
+#undef MBEDTLS_FS_IO
+#undef MBEDTLS_NET_IO
+#undef MBEDTLS_PSA_ITS_FILE_C
+#undef MBEDTLS_NET_C
+#undef MBEDTLS_ENTROPY_C
+#undef MBEDTLS_PSA_CRYPTO_C
+#undef MBEDTLS_LMS_C
+#undef MBEDTLS_PSA_CRYPTO_STORAGE_C
+#undef MBEDTLS_SSL_PROTO_TLS1_3
+#undef MBEDTLS_TIMING_C
+#undef MBEDTLS_SELF_TEST
