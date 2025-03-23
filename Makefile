@@ -1,3 +1,4 @@
+# NOTE: -lc-printscan-long-double removes an error message that would otherwise potentially be written to stderr.  That error message resulted in the __stdio_write/_seek/_close functions being imported from wasi.
 
 src/mbedtls.wasm: c-src/* vendor/include/* vendor/library/*
 	wasm32-wasi-clang -O3 \
@@ -5,7 +6,7 @@ src/mbedtls.wasm: c-src/* vendor/include/* vendor/library/*
 		-DMBEDTLS_CONFIG_FILE=\"config.h\" \
 		-fvisibility=default \
 		-mexec-model=reactor \
-		-Wl,--export-dynamic,--no-entry,--allow-undefined \
+		-Wl,-lc-printscan-long-double,--export-dynamic,--no-entry,--allow-undefined \
 		-o $@ \
 		$(filter %.c, $^)
 	wasm-tools print $@ | grep -E "import|export" > symbols.txt

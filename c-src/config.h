@@ -1,4 +1,9 @@
 #define MBEDTLS_DEPRECATED_REMOVED
+#define MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
+
+// I need to prevent <stdio.h> from being included at all costs, because I think the definitions of stdin/out/err are causing function pointers to __stdio_write/_seek/_close
+#include <stdio.h>
+#define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 
 // We're going to need to overwrite a lot of stuff...
 #define MBEDTLS_PLATFORM_C
@@ -82,7 +87,7 @@ __attribute__((import_module("./time.js"))) double js_date_now(double*);
 
 // OID uses snprintf which wasi-libc uses vfprintf to implement and since there's a virtual file there it seems to include the wasi file syscalls close/seek/write.  This issue also affect debug and error
 // TODO: Rewrite oid to not use snprintf or rewrite snprintf to not use a virtual file
-// #define MBEDTLS_OID_C
+#define MBEDTLS_OID_C
 
 #define MBEDTLS_PEM_C
 
@@ -91,23 +96,22 @@ __attribute__((import_module("./time.js"))) double js_date_now(double*);
 #define MBEDTLS_PK_PARSE_EC_COMPRESSED
 
 // TODO: These require OID
-// #define MBEDTLS_PKCS5_C
-// #define MBEDTLS_PKCS7_C
+#define MBEDTLS_PKCS5_C
+#define MBEDTLS_PKCS7_C
 #define MBEDTLS_PKCS1_V15
 #define MBEDTLS_PKCS1_V21
 
 // WEIRD: PKCS12 doesn't require OID, but PKCS5 and 7 do.  Also, check_config.h doesn't enforce OID_C for PKCS5 which results in undefined symbols when linking
 #define MBEDTLS_PKCS12_C
 
-// TODO: These require OID
-// #define MBEDTLS_PK_PARSE_C
-// #define MBEDTLS_PK_WRITE_C
+#define MBEDTLS_PK_PARSE_C
+#define MBEDTLS_PK_WRITE_C
 
 #define MBEDTLS_POLY1305_C
 #define MBEDTLS_RIPEMD160_C
 
 // TODO: RSA require MBEDTLS_PKCS1_V21
-// #define MBEDTLS_RSA_C
+#define MBEDTLS_RSA_C
 
 #define MBEDTLS_SHA1_C
 #define MBEDTLS_SHA3_C
@@ -138,26 +142,27 @@ __attribute__((import_module("./time.js"))) double js_date_now(double*);
 #define MBEDTLS_SSL_VARIABLE_BUFFER_LENGTH
 
 #define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_DHE_PSK_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_ECDH_ECDSA_ENABLED
-// #define MBEDTLS_KEY_EXCHANGE_ECDH_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_DHE_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDH_ECDSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDH_RSA_ENABLED
 
 #define MBEDTLS_X509_REMOVE_INFO
-// #define MBEDTLS_X509_CREATE_C
-// #define MBEDTLS_X509_CRL_C
-// #define MBEDTLS_X509_USE_C
+#define MBEDTLS_X509_CREATE_C
+#define MBEDTLS_X509_CRL_C
+#define MBEDTLS_X509_CRL_PARSE_C
+#define MBEDTLS_X509_USE_C
 #define MBEDTLS_X509_CRT_C
-// #define MBEDTLS_X509_CRT_PARSE_C
-// #define MBEDTLS_X509_CSR_C
+#define MBEDTLS_X509_CRT_PARSE_C
+#define MBEDTLS_X509_CSR_C
 #define MBEDTLS_X509_WRITE_CRT_C
-// #define MBEDTLS_X509_WRITE_CSR_C
-// #define MBEDTLS_X509_WRITE_C
-// #define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
+#define MBEDTLS_X509_WRITE_CSR_C
+#define MBEDTLS_X509_WRITE_C
+#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
 
 #define MBEDTLS_GENPRIME
