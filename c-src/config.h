@@ -13,11 +13,6 @@ __attribute__((import_module("./time.js"),import_name("performance_now"))) doubl
 #define MBEDTLS_PLATFORM_TIME_MACRO mbedtls_time
 __attribute__((import_module("./time.js"),import_name("date_now"))) double mbedtls_time(double*);
 
-// TODO: I intend to remove gmtime_r entirely and then import javascript is_past and is_future functions
-#define MBEDTLS_PLATFORM_GMTIME_R_ALT
-#define MBEDTLS_PLATFORM_GMTIME_R_MACRO mbedtls_platform_gmtime_r
-__attribute__((import_module("./time.js"),import_name("gmtime"))) struct tm *mbedtls_platform_gmtime_r(const double *tt, struct tm *tm_buf);
-
 #define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 
 // I think mbedtls_printf is called directly by mbedtls_ssl_config_defaults and ssl_check_no_sig_alg_duplication
