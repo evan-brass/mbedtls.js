@@ -19,7 +19,9 @@ __attribute__((import_module("./time.js"),import_name("date_now"))) double mbedt
 #define MBEDTLS_PLATFORM_PRINTF_MACRO(...)
 
 #define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
+#define MBEDTLS_SSL_DTLS_SRTP
 
+#undef MBEDTLS_HAVE_ASM
 #undef MBEDTLS_FS_IO
 #undef MBEDTLS_NET_IO
 #undef MBEDTLS_PSA_ITS_FILE_C

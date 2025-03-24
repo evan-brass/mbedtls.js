@@ -1,6 +1,6 @@
 <script type="module">
 import { encoder } from './src/util.js';
-import {mem8, memdv, mbedtls} from './src/mbedtls.js';
+import { mem8, memdv, mbedtls, check } from './src/mbedtls.js';
 
 // Allocate x509_crt and pk_context
 const cert = mbedtls.new_mbedtls_x509_crt();
@@ -19,9 +19,9 @@ mem8(ptr).set(encoded);
 
 let res;
 res = mbedtls.mbedtls_x509_crt_parse(cert, ptr, encoded.byteLength);
-if (res) throw new Error();
+check(res);
 res = mbedtls.mbedtls_pk_parse_key(pk, ptr, encoded.byteLength, null, 0, null, null);
-if (res) throw new Error();
+check(res);
 
 console.log(cert, pk);
 </script>

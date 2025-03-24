@@ -1,3 +1,5 @@
+import { decoder } from './util.js';
+
 export const { instance: { exports: mbedtls }, module } = await WebAssembly.instantiateStreaming(fetch(new URL('./mbedtls.wasm', import.meta.url)), {
 	'./time.js': {
 		date_now(ptr) {
@@ -32,6 +34,15 @@ function read_x509_time(ptr) {
 	);
 }
 
+export function check(res) {
+	if (res < 0) {
+		throw new Error(`mbedtls Error (${res}): ${cstr(mbedtls.mbedtls_high_level_strerr(res)) || 'UNKNOWN ERROR CODE'} - ${mbedtls.mbedtls_low_level_strerr(res)}`);
+	}
+}
+export function cstr(ptr) {
+	const len = mbedtls.strlen(ptr);
+	return decoder.decode(mem8(ptr, len));
+}
 export function mem8(...args) {
 	return new Uint8Array(mbedtls.memory.buffer, ...args);
 }
