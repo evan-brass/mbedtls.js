@@ -1,3 +1,4 @@
+#define MBEDTLS_JS
 #define MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
 
 #include <stdio.h>
@@ -21,6 +22,8 @@ __attribute__((import_module("./time.js"),import_name("gmtime"))) struct tm *mbe
 
 // I think mbedtls_printf is called directly by mbedtls_ssl_config_defaults and ssl_check_no_sig_alg_duplication
 #define MBEDTLS_PLATFORM_PRINTF_MACRO(...)
+
+#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
 
 #undef MBEDTLS_FS_IO
 #undef MBEDTLS_NET_IO
