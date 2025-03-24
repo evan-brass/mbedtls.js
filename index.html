@@ -1,0 +1,27 @@
+<script type="module">
+import { encoder } from './src/util.js';
+import {mem8, memdv, mbedtls} from './src/mbedtls.js';
+
+// Allocate x509_crt and pk_context
+const cert = mbedtls.new_mbedtls_x509_crt();
+if (!cert) throw new Error();
+const pk = mbedtls.new_mbedtls_pk_context();
+if (!pk) throw new Error();
+
+// Fetch the PEM
+const pem = await fetch('./cert.pem').then(r => r.text());
+console.log(pem);
+const encoded = encoder.encode(pem + '\0');
+const ptr = mbedtls.malloc(encoded.byteLength);
+if (!ptr) throw new Error();
+// Copy the encoded PEM into wasm memory
+mem8(ptr).set(encoded);
+
+let res;
+res = mbedtls.mbedtls_x509_crt_parse(cert, ptr, encoded.byteLength);
+if (res) throw new Error();
+res = mbedtls.mbedtls_pk_parse_key(pk, ptr, encoded.byteLength, null, 0, null, null);
+if (res) throw new Error();
+
+console.log(cert, pk);
+</script>
