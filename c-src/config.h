@@ -13,6 +13,10 @@ __attribute__((import_module("./time.js"),import_name("performance_now"))) doubl
 #define MBEDTLS_PLATFORM_TIME_MACRO mbedtls_time
 __attribute__((import_module("./time.js"),import_name("date_now"))) double mbedtls_time(double*);
 
+#define MBEDTLS_NO_PLATFORM_ENTROPY
+#define MBEDTLS_ENTROPY_HARDWARE_ALT
+__attribute__((import_module("./crypto.js"), import_name("get_random_values"))) int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen);
+
 #define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 
 // I think mbedtls_printf is called directly by mbedtls_ssl_config_defaults and ssl_check_no_sig_alg_duplication
@@ -26,7 +30,6 @@ __attribute__((import_module("./time.js"),import_name("date_now"))) double mbedt
 #undef MBEDTLS_NET_IO
 #undef MBEDTLS_PSA_ITS_FILE_C
 #undef MBEDTLS_NET_C
-#undef MBEDTLS_ENTROPY_C
 #undef MBEDTLS_PSA_CRYPTO_C
 #undef MBEDTLS_LMS_C
 #undef MBEDTLS_PSA_CRYPTO_STORAGE_C

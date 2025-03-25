@@ -1,4 +1,4 @@
-import { decoder } from './util.js';
+import { decoder, OutOfMemoryError } from './util.js';
 
 export const { instance: { exports: mbedtls }, module } = await WebAssembly.instantiateStreaming(fetch(new URL('./mbedtls.wasm', import.meta.url)), {
 	'./time.js': {
@@ -18,8 +18,29 @@ export const { instance: { exports: mbedtls }, module } = await WebAssembly.inst
 		utc_is_future(x509_time) {
 			return read_x509_time(x509_time) > Date.now();
 		}
+	},
+	'./crypto.js': {
+		get_random_values(_null, ptr, len, out_len) {
+			// NOTE: Technically, getRandomValues is not guaranteed to be cryptographically secure... You should probably use a wrapping (CTR|HMAC)_DRBG and hope for the best.
+			crypto.getRandomValues(mem8(ptr, len));
+			memdv(out_len).setUint32(0, len, true); // Evan, don't forget the load bearing "true" that means LITTLE ENDIAN you fucking dipshit.
+			return 0; // Infallible
+		}
 	}
 });
+mbedtls._initialize();
+
+const indirect = mbedtls.__indirect_function_table;
+const created = new Map(); // wasm wrapper func -> index
+
+export function func_ptr(func) {
+	const index = indirect.length;
+	indirect.grow(1);
+	created.set(index, func);
+	indirect.set(index, func);
+	return index;
+}
+
 function read_x509_time(ptr) {
 	const dv = memdv(ptr);
 	return Date.UTC(
@@ -34,10 +55,17 @@ function read_x509_time(ptr) {
 	);
 }
 
+export function check_non_null(res) {
+	if (res == 0) {
+		throw new OutOfMemoryError();
+	}
+	return check(res);
+}
 export function check(res) {
 	if (res < 0) {
 		throw new Error(`mbedtls Error (${res}): ${cstr(mbedtls.mbedtls_high_level_strerr(res)) || 'UNKNOWN ERROR CODE'} - ${mbedtls.mbedtls_low_level_strerr(res)}`);
 	}
+	return res;
 }
 export function cstr(ptr) {
 	const len = mbedtls.strlen(ptr);
@@ -47,5 +75,5 @@ export function mem8(...args) {
 	return new Uint8Array(mbedtls.memory.buffer, ...args);
 }
 export function memdv(...args) {
-	return new DataView(offset.memory.buffer, ...args);
+	return new DataView(mbedtls.memory.buffer, ...args);
 }

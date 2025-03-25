@@ -1,27 +1,30 @@
 <script type="module">
 import { encoder } from './src/util.js';
-import { mem8, memdv, mbedtls, check } from './src/mbedtls.js';
+import { mem8, memdv, mbedtls, check, check_non_null, func_ptr } from './src/mbedtls.js';
 
 // Allocate x509_crt and pk_context
-const cert = mbedtls.new_mbedtls_x509_crt();
-if (!cert) throw new Error();
-const pk = mbedtls.new_mbedtls_pk_context();
-if (!pk) throw new Error();
+const cert = check_non_null(mbedtls.new_mbedtls_x509_crt());
+const pk = check_non_null(mbedtls.new_mbedtls_pk_context());
 
 // Fetch the PEM
 const pem = await fetch('./cert.pem').then(r => r.text());
 console.log(pem);
 const encoded = encoder.encode(pem + '\0');
-const ptr = mbedtls.malloc(encoded.byteLength);
-if (!ptr) throw new Error();
+const ptr = check_non_null(mbedtls.malloc(encoded.byteLength));
 // Copy the encoded PEM into wasm memory
 mem8(ptr).set(encoded);
 
-let res;
-res = mbedtls.mbedtls_x509_crt_parse(cert, ptr, encoded.byteLength);
-check(res);
-res = mbedtls.mbedtls_pk_parse_key(pk, ptr, encoded.byteLength, null, 0, null, null);
-check(res);
+// Parse the PEM into a cert chain and private key
+check(mbedtls.mbedtls_x509_crt_parse(cert, ptr, encoded.byteLength));
+check(mbedtls.mbedtls_pk_parse_key(pk, ptr, encoded.byteLength, null, 0, null, null));
+
+// Setup entropy
+const entropy = check_non_null(mbedtls.new_mbedtls_entropy_context());
+const drbg = check_non_null(mbedtls.new_mbedtls_hmac_drbg_context());
+{
+	const md_info = mbedtls.mbedtls_md_info_from_type(0x09 /* mbedtls_md_type_t.MBEDTLS_MD_SHA256 */);
+	check(mbedtls.mbedtls_hmac_drbg_seed(drbg, md_info, func_ptr(mbedtls.mbedtls_entropy_func), entropy, null, 0));
+}
 
 console.log(cert, pk);
 </script>
