@@ -1,3 +1,4 @@
+export * as defines from './defines.js';
 import { decoder, OutOfMemoryError } from './util.js';
 
 export const { instance: { exports: mbedtls }, module } = await WebAssembly.instantiateStreaming(fetch(new URL('./mbedtls.wasm', import.meta.url)), {
