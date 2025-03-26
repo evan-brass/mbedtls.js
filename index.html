@@ -1,45 +1,45 @@
 <script type="module">
 import { encoder } from './src/util.js';
-import { defines, mem8, memdv, mbedtls, check, check_non_null, func_ptr } from './src/mbedtls.js';
+import { mem8, memdv, mbedtls, check, check_non_null, func_ptr } from './src/mbedtls.js';
 
 // Fetch the PEM
 const pem = await fetch('./cert.pem').then(r => r.text()).then(t => encoder.encode(t + '\0'));
 
 // Setup entropy
-const drbg = check_non_null(mbedtls.new_mbedtls_hmac_drbg_context());
-let drbg_f = func_ptr(mbedtls.mbedtls_hmac_drbg_random);
+const drbg = check_non_null(mbedtls.new_hmac_drbg_context());
+let drbg_f = func_ptr(mbedtls.hmac_drbg_random);
 {
-	const entropy = check_non_null(mbedtls.new_mbedtls_entropy_context());
-	const md_info = mbedtls.mbedtls_md_info_from_type(0x09 /* mbedtls_md_type_t.MBEDTLS_MD_SHA256 */);
-	check(mbedtls.mbedtls_hmac_drbg_seed(drbg, md_info, func_ptr(mbedtls.mbedtls_entropy_func), entropy, null, 0));
+	const entropy = check_non_null(mbedtls.new_entropy_context());
+	const md_info = mbedtls.md_info_from_type(0x09 /* mbedtls_md_type_t.MBEDTLS_MD_SHA256 */);
+	check(mbedtls.hmac_drbg_seed(drbg, md_info, func_ptr(mbedtls.entropy_func), entropy, null, 0));
 }
 
 // Parse the PEM into a cert chain and private key
-const cert = check_non_null(mbedtls.new_mbedtls_x509_crt());
-const pk = check_non_null(mbedtls.new_mbedtls_pk_context());
+const cert = check_non_null(mbedtls.new_x509_crt());
+const pk = check_non_null(mbedtls.new_pk_context());
 {
 	const pem_ptr = check_non_null(mbedtls.malloc(pem.byteLength));
 	mem8(pem_ptr).set(pem);
-	check(mbedtls.mbedtls_x509_crt_parse(cert, pem_ptr, pem.byteLength));
-	check(mbedtls.mbedtls_pk_parse_key(pk, pem_ptr, pem.byteLength, null, 0, drbg_f, drbg));
+	check(mbedtls.x509_crt_parse(cert, pem_ptr, pem.byteLength));
+	check(mbedtls.pk_parse_key(pk, pem_ptr, pem.byteLength, null, 0, drbg_f, drbg));
 	mbedtls.free(pem_ptr);
 }
 
 // Make an ssl_config
-const ssl_config = check_non_null(mbedtls.new_mbedtls_ssl_config());
-mbedtls.mbedtls_ssl_conf_rng(ssl_config, drbg_f, drbg);
-check(mbedtls.mbedtls_ssl_conf_own_cert(ssl_config, cert, pk));
-mbedtls.mbedtls_ssl_conf_authmode(defines.SSL_VERIFY_OPTIONAL);
-check(mbedtls.mbedtls_ssl_config_defaults(
+const ssl_config = check_non_null(mbedtls.new_ssl_config());
+mbedtls.ssl_conf_rng(ssl_config, drbg_f, drbg);
+check(mbedtls.ssl_conf_own_cert(ssl_config, cert, pk));
+mbedtls.ssl_conf_authmode(mbedtls.SSL_VERIFY_OPTIONAL);
+check(mbedtls.ssl_config_defaults(
 	ssl_config,
-	defines.SSL_IS_CLIENT,
-	defines.SSL_TRANSPORT_DATAGRAM,
-	defines.SSL_PRESET_DEFAULT,
+	mbedtls.SSL_IS_CLIENT,
+	mbedtls.SSL_TRANSPORT_DATAGRAM,
+	mbedtls.SSL_PRESET_DEFAULT,
 ));
 
 // Make an ssl_context
-const ssl = check_non_null(mbedtls.new_mbedtls_ssl_context());
-check(mbedtls.mbedtls_ssl_setup(ssl, ssl_config));
+const ssl = check_non_null(mbedtls.new_ssl_context());
+check(mbedtls.ssl_setup(ssl, ssl_config));
 
 console.log(ssl);
 </script>

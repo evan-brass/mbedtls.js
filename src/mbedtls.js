@@ -1,7 +1,7 @@
-export * as defines from './defines.js';
 import { decoder, OutOfMemoryError } from './util.js';
+import * as defines from './defines.js';
 
-export const { instance: { exports: mbedtls }, module } = await WebAssembly.instantiateStreaming(fetch(new URL('./mbedtls.wasm', import.meta.url)), {
+export const { instance: { exports }, module } = await WebAssembly.instantiateStreaming(fetch(new URL('./mbedtls.wasm', import.meta.url)), {
 	'./time.js': {
 		date_now(ptr) {
 			const now = Date.now();
@@ -29,7 +29,14 @@ export const { instance: { exports: mbedtls }, module } = await WebAssembly.inst
 		}
 	}
 });
-mbedtls._initialize();
+
+export const mbedtls = { ...defines };
+for (const key in exports) {
+	const new_key = key.replace(/mbedtls_/, '');
+	mbedtls[new_key] = exports[key];
+}
+
+exports._initialize();
 
 const indirect = mbedtls.__indirect_function_table;
 const created = new Map(); // wasm wrapper func -> index
@@ -64,7 +71,7 @@ export function check_non_null(res) {
 }
 export function check(res) {
 	if (res < 0) {
-		throw new Error(`mbedtls Error (${res}): ${cstr(mbedtls.mbedtls_high_level_strerr(res)) || 'UNKNOWN ERROR CODE'} - ${mbedtls.mbedtls_low_level_strerr(res)}`);
+		throw new Error(`mbedtls Error (${res}): ${cstr(mbedtls.high_level_strerr(res)) || 'UNKNOWN ERROR CODE'} - ${mbedtls.low_level_strerr(res)}`);
 	}
 	return res;
 }
