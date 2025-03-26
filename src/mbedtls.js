@@ -27,6 +27,11 @@ export const { instance: { exports }, module } = await WebAssembly.instantiateSt
 			memdv(out_len).setUint32(0, len, true); // Evan, don't forget the load bearing "true" that means LITTLE ENDIAN you fucking dipshit.
 			return 0; // Infallible
 		}
+	},
+	'./memory.js': {
+		get_buffer(ptr, len) {
+			return new Uint8Array(exports.memory.buffer, ptr, len);
+		}
 	}
 });
 

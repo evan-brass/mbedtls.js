@@ -23,6 +23,12 @@ const pk = check_non_null(mbedtls.new_pk_context());
 	check(mbedtls.x509_crt_parse(cert, pem_ptr, pem.byteLength));
 	check(mbedtls.pk_parse_key(pk, pem_ptr, pem.byteLength, null, 0, drbg_f, drbg));
 	mbedtls.free(pem_ptr);
+
+	const der = mbedtls.buf_x509_crt_raw(cert);
+	const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', der));
+	const expected = 'C3:E4:A4:B9:DD:56:08:7E:A6:15:5E:F7:EB:0F:BD:24:EB:C4:D4:AD:92:33:91:31:F4:37:3E:C5:57:44:11:D5';
+	const actual = Array.from(hash, b => b.toString(16).padStart(2, '0')).join(':').toUpperCase();
+	console.assert(expected == actual, "Fingerprint didn't match.");
 }
 
 // Make an ssl_config
