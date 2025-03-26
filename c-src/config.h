@@ -25,6 +25,7 @@ __attribute__((import_module("./crypto.js"), import_name("get_random_values"))) 
 #define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
 #define MBEDTLS_SSL_DTLS_SRTP
 #define MBEDTLS_X509_REMOVE_INFO
+#define MBEDTLS_SSL_VARIABLE_BUFFER_LENGTH
 
 #undef MBEDTLS_HAVE_ASM
 #undef MBEDTLS_FS_IO

@@ -32,6 +32,12 @@ export const { instance: { exports }, module } = await WebAssembly.instantiateSt
 		get_buffer(ptr, len) {
 			return new Uint8Array(exports.memory.buffer, ptr, len);
 		}
+	},
+	'./console.js': {
+		mbedtls_debug(_ctx, level, file_ptr, line, msg_ptr) {
+			const [file, msg] = [file_ptr, msg_ptr].map(p => decoder.decode(mem8(p, exports.strlen(p))));
+			console.log(`${file}:${line} - ${msg}`);
+		}
 	}
 });
 
