@@ -36,7 +36,12 @@ export const { instance: { exports }, module } = await WebAssembly.instantiateSt
 	'./console.js': {
 		mbedtls_debug(_ctx, level, file_ptr, line, msg_ptr) {
 			const [file, msg] = [file_ptr, msg_ptr].map(p => decoder.decode(mem8(p, exports.strlen(p))));
-			console.log(`${file}:${line} - ${msg}`);
+			[
+				console.error,
+				console.warn,
+				console.log,
+				console.log
+			][level - 1](`${file}:${line} - ${msg.replace(/\n/, '')}`);
 		}
 	}
 });

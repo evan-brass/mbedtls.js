@@ -28,6 +28,15 @@ int* get_mbedtls_ssl_context_send_res(mbedtls_ssl_context* ssl) {
 	return &ssl->send_res;
 }
 
+__externref_t get_mbedtls_ssl_context_application_data(mbedtls_ssl_context* ssl) {
+	// NOTE: mbedtls_ssl_read normally zeros the application memory.  Calling this function returns the application data in place (no-copy) and thus doesn't zero the buffer.  You can either zero it yourself when you're done with it, or you can just not call this function and use mbedtls_ssl_read while passing a normal buffer.
+	__externref_t ret = get_buffer(ssl->in_offt, ssl->in_msglen);
+	ssl->in_offt = NULL;
+	ssl->in_msglen = 0;
+	ssl->keep_current_message = 0;
+	return ret;
+}
+
 void set_mbedtls_ssl_config_dbg(mbedtls_ssl_config* conf) {
 	mbedtls_ssl_conf_dbg(conf, mbedtls_debug, NULL);
 }
